@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Java Music Player</title>
+  <style>
+    :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+      --bg: #080b14; --surface: #111725; --surface-2: #171e30; --line: #252e43;
+      --muted: #a7adbd; --text: #f7f8fc; --accent: #1ed760; --accent-2: #b9f7c8; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: linear-gradient(180deg, #151b2c 0, var(--bg) 38%); color: var(--text); }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 13px; padding: 24px max(24px, calc((100% - 1400px) / 2)); }
+    .brand { display: flex; align-items: center; gap: 13px; }
+    header:before { content: "J"; display: grid; place-items: center; width: 40px; height: 40px;
+      border-radius: 50%; background: var(--accent); color: #07110b; font-weight: 900; font-size: 1.2rem; }
+    header h1 { margin: 0 0 3px; font-size: 1.05rem; letter-spacing: .12em; }
+    header p { margin: 0; color: var(--muted); font-size: .82rem; }
+    .status { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: .78rem; }
+    .status:before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--accent-2); box-shadow: 0 0 12px var(--accent-2); }
+    .app { width: min(1400px, 94%); margin: 0 auto; padding: 14px 0 28px; }
+    .toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 18px; }
+    input { flex: 1; min-width: 160px; padding: 12px 15px; border: 1px solid var(--line);
+      border-radius: 10px; background: rgba(17, 23, 37, .88); color: var(--text); outline: none; }
+    input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(155,123,255,.12); }
+    button { border: 0; border-radius: 999px; padding: 10px 16px; background: var(--accent);
+      color: #07110b; cursor: pointer; font-weight: 800; transition: transform .15s, filter .15s; }
+    button.secondary { background: #232a3c; color: #d9deea; }
+    button:hover { filter: brightness(1.15); transform: translateY(-1px); }
+    .layout { display: grid; grid-template-columns: 210px minmax(0, 1fr) 275px; gap: 16px; min-height: 480px; }
+    .panel { background: rgba(18, 24, 39, .92); border: 1px solid rgba(255,255,255,.06); border-radius: 12px; padding: 16px; box-shadow: 0 15px 35px rgba(0,0,0,.22); }
+    .panel h2 { margin: 2px 4px 14px; font-size: .7rem; letter-spacing: .14em; color: var(--muted); }
+    .playlist { width: 100%; text-align: left; background: transparent; color: #b7bfd4; margin-bottom: 4px; }
+    .playlist.active, .playlist:hover { background: rgba(30,215,96,.14); color: white; }
+    .library-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .library-head h2 { margin-bottom: 0; }
+    .library-summary { display: flex; gap: 8px; margin: -3px 4px 8px; color: var(--muted); font-size: .72rem; }
+    .library-summary span { padding: 4px 8px; border: 1px solid var(--line); border-radius: 999px; }
+    .hero { position: relative; overflow: hidden; display: flex; justify-content: space-between; align-items: center;
+      min-height: 178px; margin-bottom: 18px; padding: 25px 30px; border: 1px solid #40366d;
+      border-color: rgba(30,215,96,.2); border-radius: 14px; background: linear-gradient(110deg, #273b32 0%, #18263a 58%, #13252b 100%);
+      box-shadow: 0 20px 45px rgba(0,0,0,.28); }
+    .hero:after { content: ""; position: absolute; width: 260px; height: 260px; right: 5%; top: -85px;
+      border-radius: 50%; background: radial-gradient(circle, rgba(155,123,255,.38), transparent 68%); }
+    .hero-copy { position: relative; z-index: 1; max-width: 620px; }
+    .eyebrow { color: var(--accent-2); font-size: .7rem; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+    .hero h2 { margin: 9px 0 7px; font-size: clamp(1.45rem, 3vw, 2.35rem); letter-spacing: -.04em; }
+    .hero p { margin: 0 0 17px; color: #b8bfd2; font-size: .92rem; }
+    .hero-art { position: relative; z-index: 1; display: grid; place-items: center; width: 108px; height: 108px;
+      margin-right: 7%; border-radius: 26px; background: linear-gradient(145deg, #9b7bff, #39c6b5);
+      box-shadow: 12px 17px 0 rgba(0,0,0,.16), 0 15px 35px rgba(155,123,255,.28); transform: rotate(7deg); font-size: 3.2rem; }
+    .song { display: grid; grid-template-columns: 44px 1fr auto; gap: 12px; align-items: center;
+      padding: 12px 8px; border-top: 1px solid var(--line); }
+    .song:first-child { border-top: 0; }
+    .song-art { display: block; width: 52px; height: 52px; border-radius: 13px; object-fit: cover;
+      box-shadow: 0 7px 15px rgba(0,0,0,.2); }
+    .song-title { font-weight: 750; }
+    .song-number { color: var(--muted); font-size: .78rem; text-align: center; }
+    .song-meta { color: var(--muted); font-size: .8rem; margin-top: 4px; }
+    .song-actions { display: flex; align-items: center; gap: 6px; }
+    .favorite { min-width: 36px; padding: 9px; background: transparent; color: var(--muted); font-size: 1.05rem; }
+    .favorite.active { color: #ff78a8; }
+    .duration { color: var(--muted); font-size: .75rem; margin-right: 4px; }
+    .queue-list { display: grid; gap: 7px; }
+    .queue-item { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 7px 8px 7px 11px; border-radius: 10px; background: var(--surface-2); font-size: .84rem; border: 1px solid var(--line); }
+    .empty { color: var(--muted); font-size: .88rem; padding: 12px 5px; }
+    .toast { position: fixed; right: 22px; bottom: 22px; z-index: 5; padding: 12px 16px;
+      border: 1px solid #3d4770; border-radius: 10px; background: #1b2340; color: white;
+      box-shadow: 0 15px 35px rgba(0,0,0,.35); opacity: 0; transform: translateY(12px);
+      pointer-events: none; transition: .25s; }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .player { margin-top: 14px; background: rgba(17, 23, 37, .94); border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; }
+    .player-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .player-label { color: var(--muted); font-size: .7rem; letter-spacing: .14em; text-transform: uppercase; }
+    #now-playing { display: block; color: var(--accent-2); margin-bottom: 8px; font-weight: 750; }
+    .mini-player { display: grid; grid-template-columns: 230px minmax(260px, 1fr) 220px; align-items: center; gap: 24px; }
+    .track-info { display: flex; align-items: center; gap: 11px; min-width: 0; }
+    .now-art { display: grid; place-items: center; flex: 0 0 48px; height: 48px; border-radius: 13px;
+      background: linear-gradient(135deg, #a27dff, #32bcae); font-size: 1.4rem; box-shadow: 0 8px 18px rgba(155,123,255,.2); }
+    .track-copy { min-width: 0; }
+    .track-copy #now-playing { overflow: hidden; margin: 3px 0 0; color: var(--text); font-size: .9rem; text-overflow: ellipsis; white-space: nowrap; }
+    .track-copy .player-label { font-size: .62rem; }
+    .main-controls { display: flex; justify-content: center; align-items: center; gap: 7px; }
+    .main-controls button { min-width: 36px; padding: 9px; border-radius: 50%; }
+    .main-controls button:nth-child(3) { min-width: 46px; padding: 13px; background: var(--accent); }
+    .progress-wrap { margin-top: 7px; }
+    .time-row { display: flex; justify-content: space-between; color: var(--muted); font-size: .68rem; }
+    .progress { width: 100%; height: 4px; accent-color: var(--accent); }
+    .player-settings { display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
+    .player-settings label { color: var(--muted); font-size: .76rem; }
+    .player-settings input[type="range"] { width: 85px; }
+    .player-settings select, .player-settings input[type="checkbox"] { margin-left: 3px; }
+    audio { width: 100%; }
+    .player-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 9px; }
+    .player-actions label { color: var(--muted); align-self: center; font-size: .85rem; }
+    input[type="range"] { accent-color: var(--accent); }
+    select { background: var(--surface-2); color: var(--text); border: 1px solid var(--line); border-radius: 7px; padding: 5px; }
+    @media (max-width: 900px) { .layout { grid-template-columns: 180px minmax(0, 1fr); }
+      .queue-panel { grid-column: 1 / -1; } }
+    @media (max-width: 600px) { .layout { display: block; } .panel { margin-bottom: 10px; }
+      .toolbar { flex-wrap: wrap; } .hero { min-height: 160px; } .hero-art { width: 74px; height: 74px; font-size: 2rem; margin-right: 0; }
+      .mini-player { grid-template-columns: 1fr; gap: 13px; } .player-settings { justify-content: flex-start; } }
+  </style>
+</head>
+<body>
+  <header><div class="brand"><div><h1>MUSIC PLAYER</h1><p>Your collection, your sound</p></div></div><div class="status">Ready to play</div></header>
+  <main class="app">
+    <div class="toolbar">
+      <input id="search" type="search" placeholder="Search title, artist, album, or file">
+      <button id="import-button">Import files</button>
+      <button id="import-folder" class="secondary">Import folder</button>
+      <button id="add-demo" class="secondary">Add demo music</button>
+      <button id="new-playlist">+ New playlist</button>
+      <button id="add-selected" class="secondary">Add selected</button>
+    </div>
+    <section class="hero">
+      <div class="hero-copy">
+        <div class="eyebrow">Featured playlist</div>
+        <h2>Find your next favorite sound.</h2>
+        <p>Curated tracks for focused work, late-night drives, and everything in between.</p>
+        <button id="hero-play">Play featured mix</button>
+      </div>
+      <div class="hero-art">♪</div>
+    </section>
+    <div class="layout">
+      <aside class="panel">
+        <h2>DISCOVER</h2>
+        <button class="playlist">⌂ &nbsp; Home</button>
+        <button class="playlist">⌕ &nbsp; Search</button>
+        <h2>YOUR LIBRARY</h2>
+        <button class="playlist active" data-playlist="Library">Library</button>
+        <button class="playlist" data-playlist="Demo Mix">Demo Mix</button>
+        <button class="playlist" data-playlist="Favorites">Favorites</button>
+        <button class="playlist" data-playlist="Recently played">Recently played</button>
+      </aside>
+      <section class="panel">
+        <div class="library-head"><h2 id="library-title">YOUR LIBRARY</h2><button id="add-all" class="secondary">Add all visible</button></div>
+        <div class="library-summary"><span>8 tracks</span><span>WAV audio</span></div>
+        <div id="song-list"><article class="song" data-audio="audio/Demo%20Artist%20-%20Evening%20Drive.wav" data-title="Demo Artist - Evening Drive.wav">
+  <img class="song-art" src="artwork/demo-artist-evening-drive.svg" alt="Cover art for Demo Artist - Evening Drive.wav">
+  <div>
+    <div class="song-title">Demo Artist - Evening Drive.wav</div>
+    <div class="song-meta">Demo Artist · WAV audio · 00:05</div>
+  </div>
+  <div class="song-actions"><span class="duration">00:05</span><button class="favorite" data-favorite title="Favorite">♡</button><button data-play>Play</button> <button data-add class="secondary">+ Queue</button></div>
+</article>
+
+<article class="song" data-audio="audio/Demo%20Artist%20-%20Morning%20Glow.wav" data-title="Demo Artist - Morning Glow.wav">
+  <img class="song-art" src="artwork/demo-artist-morning-glow.svg" alt="Cover art for Demo Artist - Morning Glow.wav">
+  <div>
+    <div class="song-title">Demo Artist - Morning Glow.wav</div>
+    <div class="song-meta">Demo Artist · WAV audio · 00:05</div>
+  </div>
+  <div class="song-actions"><span class="duration">00:05</span><button class="favorite" data-favorite title="Favorite">♡</button><button data-play>Play</button> <button data-add class="secondary">+ Queue</button></div>
+</article>
+
+<article class="song" data-audio="audio/Demo%20Artist%20-%20Night%20Walk.wav" data-title="Demo Artist - Night Walk.wav">
+  <img class="song-art" src="artwork/demo-artist-night-walk.svg" alt="Cover art for Demo Artist - Night Walk.wav">
+  <div>
+    <div class="song-title">Demo Artist - Night Walk.wav</div>
+    <div class="song-meta">Demo Artist · WAV audio · 00:05</div>
+  </div>
+  <div class="song-actions"><span class="duration">00:05</span><button class="favorite" data-favorite title="Favorite">♡</button><button data-play>Play</button> <button data-add class="secondary">+ Queue</button></div>
+</article>
+
+<article class="song" data-audio="audio/Future%20Echo%20-%20Digital%20Dreams.wav" data-title="Future Echo - Digital Dreams.wav">
+  <img class="song-art" src="artwork/future-echo-digital-dreams.svg" alt="Cover art for Future Echo - Digital Dreams.wav">
+  <div>
+    <div class="song-title">Future Echo - Digital Dreams.wav</div>
+    <div class="song-meta">Demo Artist · WAV audio · 00:05</div>
+  </div>
+  <div class="song-actions"><span class="duration">00:05</span><button class="favorite" data-favorite title="Favorite">♡</button><button data-play>Play</button> <button data-add class="secondary">+ Queue</button></div>
+</article>
+
+<article class="song" data-audio="audio/Lo-Fi%20Lab%20-%20Golden%20Hour.wav" data-title="Lo-Fi Lab - Golden Hour.wav">
+  <img class="song-art" src="artwork/lo-fi-lab-golden-hour.svg" alt="Cover art for Lo-Fi Lab - Golden Hour.wav">
+  <div>
+    <div class="song-title">Lo-Fi Lab - Golden Hour.wav</div>
+    <div class="song-meta">Demo Artist · WAV audio · 00:05</div>
+  </div>
+  <div class="song-actions"><span class="duration">00:05</span><button class="favorite" data-favorite title="Favorite">♡</button><button data-play>Play</button> <button data-add class="secondary">+ Queue</button></div>
+</article>
+
+<article class="song" data-audio="audio/Neon%20Pulse%20-%20Midnight%20City.wav" data-title="Neon Pulse - Midnight City.wav">
+  <img class="song-art" src="artwork/neon-pulse-midnight-city.svg" alt="Cover art for Neon Pulse - Midnight City.wav">
+  <div>
+    <div class="song-title">Neon Pulse - Midnight City.wav</div>
+    <div class="song-meta">Demo Artist · WAV audio · 00:05</div>
+  </div>
+  <div class="song-actions"><span class="duration">00:05</span><button class="favorite" data-favorite title="Favorite">♡</button><button data-play>Play</button> <button data-add class="secondary">+ Queue</button></div>
+</article>
+
+<article class="song" data-audio="audio/Ocean%20Drive%20-%20Blue%20Horizon.wav" data-title="Ocean Drive - Blue Horizon.wav">
+  <img class="song-art" src="artwork/ocean-drive-blue-horizon.svg" alt="Cover art for Ocean Drive - Blue Horizon.wav">
+  <div>
+    <div class="song-title">Ocean Drive - Blue Horizon.wav</div>
+    <div class="song-meta">Demo Artist · WAV audio · 00:05</div>
+  </div>
+  <div class="song-actions"><span class="duration">00:05</span><button class="favorite" data-favorite title="Favorite">♡</button><button data-play>Play</button> <button data-add class="secondary">+ Queue</button></div>
+</article>
+
+<article class="song" data-audio="audio/Sunset%20Social%20-%20Weekend%20Lights.wav" data-title="Sunset Social - Weekend Lights.wav">
+  <img class="song-art" src="artwork/sunset-social-weekend-lights.svg" alt="Cover art for Sunset Social - Weekend Lights.wav">
+  <div>
+    <div class="song-title">Sunset Social - Weekend Lights.wav</div>
+    <div class="song-meta">Demo Artist · WAV audio · 00:05</div>
+  </div>
+  <div class="song-actions"><span class="duration">00:05</span><button class="favorite" data-favorite title="Favorite">♡</button><button data-play>Play</button> <button data-add class="secondary">+ Queue</button></div>
+</article>
+</div>
+      </section>
+      <aside class="panel queue-panel">
+        <h2>UP NEXT</h2>
+        <div id="queue-list" class="queue-list"><div class="empty">Your queue is empty.</div></div>
+        <div class="player-actions"><button id="move-up" class="secondary">Move up</button><button id="move-down" class="secondary">Move down</button></div>
+      </aside>
+    </div>
+    <section class="player">
+      <div class="mini-player">
+        <div class="track-info"><div class="now-art">♪</div><div class="track-copy"><span class="player-label">Now playing</span><strong id="now-playing">Nothing is playing</strong></div></div>
+        <div><div class="main-controls"><button id="previous" class="secondary" title="Previous">|◀</button><button id="pause" class="secondary" title="Pause">Ⅱ</button><button id="play" title="Play">▶</button><button id="stop" class="secondary" title="Stop">■</button><button id="next" class="secondary" title="Next">▶|</button></div><div class="progress-wrap"><input id="progress" class="progress" type="range" min="0" max="100" value="0"><div class="time-row"><span id="elapsed">0:00</span><span id="duration">0:00</span></div></div></div>
+        <div class="player-settings"><label>↻ <select id="repeat"><option>No repeat</option><option>Repeat track</option><option>Repeat queue</option></select></label><label>🔊 <input id="volume" type="range" min="0" max="100" value="75"></label></div>
+      </div>
+      <audio id="audio-player"></audio>
+    </section>
+  </main>
+  <div id="toast" class="toast"></div>
+  <script>
+    const player = document.querySelector("#audio-player");
+    const nowPlaying = document.querySelector("#now-playing");
+    const songs = [...document.querySelectorAll(".song")];
+    const queue = [];
+    const favorites = new Set();
+    const recentlyPlayed = [];
+    let current = -1;
+    let toastTimer;
+    function notify(message) {
+      const toast = document.querySelector("#toast");
+      toast.textContent = message; toast.classList.add("show");
+      clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove("show"), 2200);
+    }
+    function playSong(song) {
+      current = songs.indexOf(song); player.src = song.dataset.audio;
+      nowPlaying.textContent = "Playing: " + song.dataset.title; player.play();
+      if (!recentlyPlayed.includes(song)) recentlyPlayed.unshift(song);
+      notify("Now playing: " + song.dataset.title);
+    }
+    function renderQueue() {
+      const list = document.querySelector("#queue-list");
+      list.innerHTML = queue.length ? queue.map((song, index) => `<div class="queue-item"><span>${song.dataset.title}</span><button class="favorite secondary" data-remove-queue="${index}" title="Remove">×</button></div>`).join("") : '<div class="empty">Your queue is empty.</div>';
+      list.querySelectorAll("[data-remove-queue]").forEach(button => button.addEventListener("click", () => {
+        queue.splice(Number(button.dataset.removeQueue), 1); renderQueue(); notify("Removed from queue");
+      }));
+    }
+    songs.forEach(song => {
+      song.querySelector("[data-play]").addEventListener("click", () => playSong(song));
+      song.querySelector("[data-add]").addEventListener("click", () => { queue.push(song); renderQueue(); });
+      song.querySelector("[data-favorite]").addEventListener("click", event => {
+        const button = event.currentTarget;
+        if (favorites.has(song)) { favorites.delete(song); button.classList.remove("active"); button.textContent = "♡"; notify("Removed from favorites"); }
+        else { favorites.add(song); button.classList.add("active"); button.textContent = "♥"; notify("Added to favorites"); }
+      });
+    });
+    document.querySelector("#add-all").addEventListener("click", () => { songs.filter(song => !song.hidden).forEach(song => queue.push(song)); renderQueue(); notify("Visible tracks added to queue"); });
+    document.querySelector("#add-selected").addEventListener("click", () => {
+      const selected = songs.find(song => !song.hidden);
+      if (selected) { queue.push(selected); renderQueue(); notify("Track added to queue"); }
+    });
+    document.querySelector("#play").addEventListener("click", () => player.src ? player.play() : songs[0] && playSong(songs[0]));
+    document.querySelector("#hero-play").addEventListener("click", () => songs[0] && playSong(songs[0]));
+    document.querySelector("#pause").addEventListener("click", () => player.pause());
+    document.querySelector("#stop").addEventListener("click", () => { player.pause(); player.currentTime = 0; });
+    document.querySelector("#next").addEventListener("click", () => songs[(current + 1) % songs.length] && playSong(songs[(current + 1) % songs.length]));
+    document.querySelector("#previous").addEventListener("click", () => songs[(current - 1 + songs.length) % songs.length] && playSong(songs[(current - 1 + songs.length) % songs.length]));
+    document.querySelector("#volume").addEventListener("input", event => player.volume = event.target.value / 100);
+    player.addEventListener("loadedmetadata", () => document.querySelector("#duration").textContent = formatTime(player.duration));
+    player.addEventListener("timeupdate", () => {
+      document.querySelector("#progress").value = player.duration ? player.currentTime / player.duration * 100 : 0;
+      document.querySelector("#elapsed").textContent = formatTime(player.currentTime);
+    });
+    document.querySelector("#progress").addEventListener("input", event => {
+      if (player.duration) player.currentTime = event.target.value / 100 * player.duration;
+    });
+    function formatTime(seconds) {
+      if (!Number.isFinite(seconds)) return "0:00";
+      return Math.floor(seconds / 60) + ":" + String(Math.floor(seconds % 60)).padStart(2, "0");
+    }
+    document.querySelector("#search").addEventListener("input", event => {
+      const query = event.target.value.toLowerCase();
+      songs.forEach(song => song.hidden = !song.dataset.title.toLowerCase().includes(query));
+    });
+    document.querySelectorAll("[data-playlist]").forEach(button => button.addEventListener("click", () => {
+      document.querySelectorAll(".playlist").forEach(item => item.classList.remove("active"));
+      button.classList.add("active"); document.querySelector("#library-title").textContent = button.dataset.playlist.toUpperCase();
+      songs.forEach(song => song.hidden = button.dataset.playlist === "Favorites" ? !favorites.has(song) : button.dataset.playlist === "Recently played" ? !recentlyPlayed.includes(song) : false);
+    }));
+    document.addEventListener("keydown", event => {
+      if (event.target.matches("input, select")) return;
+      if (event.code === "Space") { event.preventDefault(); player.paused ? document.querySelector("#play").click() : player.pause(); }
+      if (event.code === "ArrowRight") document.querySelector("#next").click();
+      if (event.code === "ArrowLeft") document.querySelector("#previous").click();
+    });
+    document.querySelector("#import-button").addEventListener("click", () => alert("GitHub Pages cannot permanently import files. Add audio files to demo-music and run the Java generator again."));
+    document.querySelector("#import-folder").addEventListener("click", () => alert("Add a folder to demo-music, then run the Java generator again."));
+    document.querySelector("#add-demo").addEventListener("click", () => alert("The demo WAV files are already included in this generated page."));
+    document.querySelector("#new-playlist").addEventListener("click", () => alert("Create playlists by adding a playlist button in the Java generator source."));
+  </script>
+</body>
+</html>
