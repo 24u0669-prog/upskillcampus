@@ -1,0 +1,1 @@
+I completed and organized four weekly internship projects in a single GitHub repository. The repository includes project source files, documentation, supporting assets, and a Java dashboard project. I used Visual Studio Code and GitHub to organize, commit, and publish my work.
